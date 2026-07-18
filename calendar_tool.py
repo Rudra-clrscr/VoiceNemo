@@ -53,7 +53,7 @@ def check_availability(date_iso: str) -> str:
         return f"Existing events on {dt.strftime('%Y-%m-%d')}:\n" + "\n".join(busy_times)
         
     except Exception as e:
-        print(f"❌ CALENDAR ERROR: {e}")
+        print(f"CALENDAR ERROR: {e}")
         return f"Failed to check availability: {str(e)}"
 
 def book_meeting(date_time_iso: str, name: str = "User") -> str:
@@ -79,9 +79,9 @@ def book_meeting(date_time_iso: str, name: str = "User") -> str:
         }
 
         event_result = service.events().insert(calendarId=calendar_id, body=event).execute()
-        print(f"✅ REAL CALENDAR BOOKING SUCCESS: {event_result.get('htmlLink')}")
+        print(f"REAL CALENDAR BOOKING SUCCESS: {event_result.get('htmlLink')}")
         return f"Success! Meeting booked on Google Calendar for {name}."
         
     except Exception as e:
-        print(f"❌ CALENDAR ERROR: {e}")
+        print(f"CALENDAR ERROR: {e}")
         return f"Failed to book meeting: {str(e)}"

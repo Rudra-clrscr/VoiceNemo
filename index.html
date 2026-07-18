@@ -4,229 +4,742 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NovaVoice - AI Assistant</title>
+    <title>VoiceNemo — Real-time AI Assistant</title>
+    <meta name="description" content="Ultra-low latency real-time voice assistant powered by Gemini Live API with calendar, weather, and email tools.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
+        /* ═══════════════════════════════════════════════════════
+           DESIGN TOKENS (PostHog Inspired Bold Minimalist)
+           ═══════════════════════════════════════════════════════ */
         :root {
-            --bg-color: #0f172a;
-            --surface: #1e293b;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-            --accent: #3b82f6;
-            --danger: #ef4444;
-            --success: #10b981;
+            --bg-base: #111111;
+            --bg-grid: rgba(255, 255, 255, 0.03);
+            --bg-surface: #1a1a1a;
+            --bg-surface-elevated: #242424;
+            --border-primary: #000000;
+            --border-secondary: #333333;
+            
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0a0;
+            --text-muted: #666666;
+            
+            --accent-orange: #ff5722;
+            --accent-green: #a2e84d;
+            --accent-cyan: #00bcd4;
+            --accent-yellow: #ffd54f;
+            --accent-red: #ff3d00;
+            
+            --radius-sharp: 4px;
+            --radius-md: 8px;
+            
+            --shadow-flat: 4px 4px 0px #000000;
+            --shadow-flat-large: 8px 8px 0px #000000;
+            --shadow-flat-hover: 2px 2px 0px #000000;
+            
+            --transition-snap: 0.1s cubic-bezier(0, 0, 0.2, 1);
+            --transition-smooth: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* ═══════════════════════════════════════════════════════
+           RESET & BASE
+           ═══════════════════════════════════════════════════════ */
+        *, *::before, *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
 
         body {
-            margin: 0;
-            padding: 0;
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--bg-base);
+            background-image: 
+                linear-gradient(to right, var(--bg-grid) 1px, transparent 1px),
+                linear-gradient(to bottom, var(--bg-grid) 1px, transparent 1px);
+            background-size: 24px 24px;
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+            display: flex;
+            justify-content: center;
+        }
+
+        /* ═══════════════════════════════════════════════════════
+           LAYOUT
+           ═══════════════════════════════════════════════════════ */
+        .app-container {
+            width: 100%;
+            max-width: 600px;
+            padding: 1.5rem 1rem;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
             min-height: 100vh;
         }
 
-        .status-badge {
-            position: absolute;
-            top: 2rem;
-            background: var(--surface);
-            padding: 0.5rem 1rem;
-            border-radius: 999px;
-            font-size: 0.875rem;
-            font-weight: 500;
+        /* ═══════════════════════════════════════════════════════
+           RETRO OS HEADER
+           ═══════════════════════════════════════════════════════ */
+        .app-header {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.8rem 1.2rem;
+            background: var(--bg-surface);
+            border: 2px solid var(--border-primary);
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-flat);
+            margin-bottom: 1.5rem;
+        }
+
+        .brand {
             display: flex;
             align-items: center;
             gap: 0.5rem;
-            border: 1px solid #334155;
         }
 
-        .dot {
+        .brand-logo {
+            background: var(--accent-orange);
+            color: #000;
+            font-weight: 700;
+            padding: 0.2rem 0.5rem;
+            border-radius: var(--radius-sharp);
+            border: 1.5px solid var(--border-primary);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.95rem;
+        }
+
+        .brand-text {
+            font-size: 1.25rem;
+            font-weight: 700;
+            letter-spacing: -0.03em;
+            color: var(--text-primary);
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .retro-btn {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.78rem;
+            font-weight: 500;
+            padding: 0.4rem 0.8rem;
+            background: var(--bg-surface-elevated);
+            color: var(--text-primary);
+            border: 2px solid var(--border-primary);
+            border-radius: var(--radius-sharp);
+            cursor: pointer;
+            box-shadow: 2px 2px 0px #000000;
+            transition: all var(--transition-snap);
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        .retro-btn:hover {
+            transform: translate(1px, 1px);
+            box-shadow: 1px 1px 0px #000000;
+            background: var(--bg-surface);
+        }
+
+        .retro-btn:active {
+            transform: translate(2px, 2px);
+            box-shadow: 0px 0px 0px #000000;
+        }
+
+        .retro-btn.orange {
+            background: var(--accent-orange);
+            color: #000000;
+            font-weight: 700;
+        }
+        
+        .retro-btn.orange:hover {
+            background: #ff6e40;
+        }
+
+        /* ═══════════════════════════════════════════════════════
+           STATUS MONITOR BAR
+           ═══════════════════════════════════════════════════════ */
+        .status-bar {
+            width: 100%;
+            background: var(--bg-surface);
+            border: 2px solid var(--border-primary);
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-flat);
+            padding: 0.6rem 1rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+        }
+
+        .status-label {
+            color: var(--text-secondary);
+        }
+
+        .status-value {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 700;
+            color: var(--accent-yellow);
+        }
+
+        .status-dot {
             width: 8px;
             height: 8px;
             border-radius: 50%;
             background: var(--text-muted);
+            border: 1px solid var(--border-primary);
         }
 
-        .dot.live {
-            background: var(--success);
-            box-shadow: 0 0 10px var(--success);
+        .status-dot.live {
+            background: var(--accent-green);
+            box-shadow: 0 0 8px var(--accent-green);
+            animation: dotPulse 1.5s infinite;
         }
 
-        .dot.speaking {
-            background: var(--accent);
-            box-shadow: 0 0 10px var(--accent);
+        .status-dot.speaking {
+            background: var(--accent-orange);
+            box-shadow: 0 0 8px var(--accent-orange);
+            animation: dotPulse 0.8s infinite;
         }
 
-        .orb-container {
+        @keyframes dotPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        /* ═══════════════════════════════════════════════════════
+           VOICENEMO OSCILLATOR ORB
+           ═══════════════════════════════════════════════════════ */
+        .oscillator-container {
             position: relative;
-            width: 150px;
-            height: 150px;
+            width: 100%;
+            background: var(--bg-surface);
+            border: 2px solid var(--border-primary);
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-flat);
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .oscillator-title {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-bottom: 1.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .orb-wrapper {
+            position: relative;
+            width: 140px;
+            height: 140px;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-bottom: 2rem;
         }
 
-        .call-button {
-            width: 100px;
-            height: 100px;
+        .call-btn-retro {
+            width: 84px;
+            height: 84px;
             border-radius: 50%;
-            border: none;
-            background: var(--surface);
-            color: var(--text-main);
+            border: 3px solid var(--border-primary);
+            background: var(--bg-surface-elevated);
+            color: var(--text-primary);
             font-size: 2rem;
             cursor: pointer;
             z-index: 10;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
-            transition: background 0.3s;
+            box-shadow: 4px 4px 0px #000000;
+            transition: all var(--transition-snap);
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
-        /* The visualizer will dynamically inject scale values here */
-        .call-button.active {
-            background: var(--danger);
-            color: white;
+        .call-btn-retro:hover {
+            transform: translate(1px, 1px);
+            box-shadow: 3px 3px 0px #000000;
+            background: var(--bg-surface);
+        }
+
+        .call-btn-retro:active {
+            transform: translate(4px, 4px);
+            box-shadow: 0px 0px 0px #000000;
+        }
+
+        .call-btn-retro.active {
+            background: var(--accent-orange);
+            color: #000000;
+            box-shadow: 4px 4px 0px #000000;
             transform: scale(var(--mic-scale, 1));
         }
 
-        .ring {
+        .visualizer-ring {
             position: absolute;
-            width: 100%;
-            height: 100%;
             border-radius: 50%;
-            border: 2px solid var(--accent);
+            border: 2px solid var(--accent-orange);
             opacity: 0;
             pointer-events: none;
+            transition: opacity 0.2s, transform 0.05s ease-out;
+        }
+
+        .v-ring-1 {
+            width: 110px;
+            height: 110px;
             transform: scale(var(--ai-scale, 1));
-            transition: transform 0.05s ease-out, opacity 0.1s;
         }
 
-        .speaking-mode .ring {
-            opacity: 0.8;
+        .v-ring-2 {
+            width: 135px;
+            height: 135px;
+            border-color: var(--accent-yellow);
+            transform: scale(var(--ai-scale, 1));
         }
 
-        .transcript-container {
-            width: 90%;
-            max-width: 500px;
-            height: 300px;
-            background: var(--surface);
-            border-radius: 16px;
+        .v-ring-3 {
+            width: 160px;
+            height: 160px;
+            border-color: var(--accent-green);
+            transform: scale(var(--ai-scale, 1));
+        }
+
+        .speaking-mode .v-ring-1 { opacity: 0.9; }
+        .speaking-mode .v-ring-2 { opacity: 0.6; }
+        .speaking-mode .v-ring-3 { opacity: 0.3; }
+
+        /* ═══════════════════════════════════════════════════════
+           OS WINDOW TERMINAL (TRANSCRIPT)
+           ═══════════════════════════════════════════════════════ */
+        .window-terminal {
+            width: 100%;
+            background: var(--bg-surface);
+            border: 2px solid var(--border-primary);
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-flat);
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 1.5rem;
+            overflow: hidden;
+        }
+
+        .window-header {
+            background: var(--bg-surface-elevated);
+            border-bottom: 2px solid var(--border-primary);
+            padding: 0.5rem 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .window-title {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .window-controls {
+            display: flex;
+            gap: 0.4rem;
+        }
+
+        .w-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            border: 1px solid var(--border-primary);
+        }
+        
+        .w-dot.red { background: var(--accent-red); }
+        .w-dot.yellow { background: var(--accent-yellow); }
+        .w-dot.green { background: var(--accent-green); }
+
+        .terminal-body {
+            height: 320px;
             padding: 1rem;
             overflow-y: auto;
-            border: 1px solid #334155;
             display: flex;
             flex-direction: column;
             gap: 0.75rem;
+            scroll-behavior: smooth;
         }
 
+        .terminal-body::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .terminal-body::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .terminal-body::-webkit-scrollbar-thumb {
+            background: var(--border-secondary);
+            border: 2px solid var(--bg-surface);
+            border-radius: var(--radius-sharp);
+        }
+
+        /* ═══════════════════════════════════════════════════════
+           CHAT MESSAGES
+           ═══════════════════════════════════════════════════════ */
         .message {
-            font-size: 0.95rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82rem;
             line-height: 1.5;
-            padding: 0.75rem 1rem;
-            border-radius: 12px;
-            max-width: 80%;
+            padding: 0.6rem 0.8rem;
+            border-radius: var(--radius-sharp);
+            border: 1.5px solid var(--border-primary);
+            max-width: 88%;
             width: fit-content;
             word-wrap: break-word;
+            animation: blockFadeIn 0.2s cubic-bezier(0, 0, 0.2, 1);
+        }
+
+        @keyframes blockFadeIn {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         .user-msg {
-            background: #334155;
+            background: var(--bg-surface-elevated);
+            border-color: var(--border-primary);
             align-self: flex-end;
-            color: white;
-            border-bottom-right-radius: 4px;
+            color: #ffffff;
+            box-shadow: 2px 2px 0px #000000;
+        }
+        .user-msg::before {
+            content: "YOU >";
+            font-weight: 700;
+            color: var(--accent-orange);
+            display: block;
+            font-size: 0.68rem;
+            margin-bottom: 0.2rem;
+            letter-spacing: 0.05em;
         }
 
         .ai-msg {
-            background: rgba(59, 130, 246, 0.1);
-            border: 1px solid rgba(59, 130, 246, 0.2);
+            background: var(--bg-surface-elevated);
+            border-color: var(--accent-orange);
             align-self: flex-start;
-            color: #60a5fa;
-            border-bottom-left-radius: 4px;
+            color: #ffffff;
+            box-shadow: 2px 2px 0px var(--accent-orange);
+        }
+        .ai-msg::before {
+            content: "NEMO >";
+            font-weight: 700;
+            color: var(--accent-orange);
+            display: block;
+            font-size: 0.68rem;
+            margin-bottom: 0.2rem;
+            letter-spacing: 0.05em;
         }
 
         .system-msg {
             align-self: center;
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             color: var(--text-muted);
+            border: none;
+            background: none;
+            box-shadow: none;
+            padding: 0;
             font-style: italic;
         }
 
         .tool-card {
             align-self: center;
-            background: rgba(16, 185, 129, 0.1);
-            border: 1px dashed var(--success);
-            color: #34d399;
-            font-family: monospace;
-            font-size: 0.85rem;
-            border-radius: 8px;
-            padding: 0.75rem 1rem;
-            width: 90%;
-            box-sizing: border-box;
+            background: #000000;
+            border: 1.5px solid var(--accent-green);
+            color: var(--accent-green);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.78rem;
+            line-height: 1.6;
+            border-radius: var(--radius-sharp);
+            padding: 0.6rem 0.8rem;
+            width: 95%;
             white-space: pre-wrap;
+            box-shadow: 2px 2px 0px #000000;
+            animation: blockFadeIn 0.2s cubic-bezier(0, 0, 0.2, 1);
+        }
+        .tool-card::before {
+            content: "TOOL EXECUTION >";
+            font-weight: 700;
+            color: var(--accent-green);
+            display: block;
+            font-size: 0.68rem;
+            margin-bottom: 0.2rem;
+            letter-spacing: 0.05em;
         }
 
-        .setup-modal {
+        /* ═══════════════════════════════════════════════════════
+           ACTION BUTTONS FOOTER
+           ═══════════════════════════════════════════════════════ */
+        .terminal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.5rem;
+            width: 100%;
+            margin-bottom: 1.5rem;
+        }
+
+        /* ═══════════════════════════════════════════════════════
+           SETUP MODAL (Retro Installation Card)
+           ═══════════════════════════════════════════════════════ */
+        .gateway-modal {
             position: fixed;
             inset: 0;
-            background: rgba(15, 23, 42, 0.95);
+            background: rgba(0, 0, 0, 0.85);
             display: flex;
-            flex-direction: column;
             align-items: center;
             justify-content: center;
             z-index: 100;
+            padding: 1rem;
         }
 
-        .setup-modal.hidden {
+        .gateway-modal.hidden {
             display: none;
         }
 
-        .api-input {
-            padding: 1rem;
-            border-radius: 8px;
-            border: 1px solid #334155;
-            background: #0f172a;
-            color: white;
-            width: 300px;
-            margin-bottom: 1rem;
+        .gateway-card {
+            background: var(--bg-surface);
+            border: 2px solid var(--border-primary);
+            border-radius: var(--radius-md);
+            width: 100%;
+            max-width: 420px;
+            box-shadow: var(--shadow-flat-large);
+            overflow: hidden;
+            animation: modalPopIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
-        .btn-start {
-            padding: 1rem 2rem;
-            border-radius: 8px;
-            background: var(--success);
-            color: white;
-            border: none;
-            font-weight: bold;
+        @keyframes modalPopIn {
+            from { opacity: 0; transform: scale(0.92) translateY(10px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        .gateway-form {
+            padding: 1.5rem 2rem;
+            text-align: center;
+        }
+
+        .gateway-logo {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: 3px solid var(--border-primary);
+            background: var(--accent-orange);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            margin: 0 auto 1.25rem;
+            box-shadow: 4px 4px 0px #000000;
+        }
+
+        .gateway-card h2 {
+            font-size: 1.4rem;
+            font-weight: 700;
+            letter-spacing: -0.03em;
+            margin-bottom: 0.5rem;
+        }
+
+        .gateway-card .subtitle {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-bottom: 1.5rem;
+            line-height: 1.4;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .gateway-input {
+            width: 100%;
+            padding: 0.8rem 1rem;
+            border-radius: var(--radius-sharp);
+            border: 2px solid var(--border-primary);
+            background: var(--bg-surface-elevated);
+            color: var(--text-primary);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            outline: none;
+            transition: border-color var(--transition-snap);
+            margin-bottom: 1.25rem;
+            box-shadow: inset 2px 2px 0px #000000;
+        }
+
+        .gateway-input:focus {
+            border-color: var(--accent-orange);
+        }
+
+        .gateway-btn {
+            width: 100%;
+            padding: 0.8rem;
+            border-radius: var(--radius-sharp);
+            background: var(--accent-orange);
+            color: #000000;
+            border: 2px solid var(--border-primary);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            font-weight: 700;
             cursor: pointer;
+            transition: all var(--transition-snap);
+            box-shadow: 4px 4px 0px #000000;
+        }
+
+        .gateway-btn:hover {
+            transform: translate(1px, 1px);
+            box-shadow: 3px 3px 0px #000000;
+            background: #ff6e40;
+        }
+
+        .gateway-btn:active {
+            transform: translate(4px, 4px);
+            box-shadow: 0px 0px 0px #000000;
+        }
+
+        /* ═══════════════════════════════════════════════════════
+           FOOTER
+           ═══════════════════════════════════════════════════════ */
+        .app-footer {
+            width: 100%;
+            text-align: center;
+            padding: 1.5rem 0 1rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            letter-spacing: 0.02em;
+        }
+
+        .app-footer span {
+            color: var(--accent-orange);
+            font-weight: 500;
+        }
+
+        /* ═══════════════════════════════════════════════════════
+           RESPONSIVE
+           ═══════════════════════════════════════════════════════ */
+        @media (max-width: 640px) {
+            .app-container { padding: 1rem 0.5rem; }
+            .terminal-body { height: 260px; }
+            .orb-wrapper { width: 120px; height: 120px; }
+            .call-btn-retro { width: 72px; height: 72px; font-size: 1.6rem; }
+            .v-ring-1 { width: 95px; height: 95px; }
+            .v-ring-2 { width: 115px; height: 115px; }
+            .v-ring-3 { width: 130px; height: 130px; }
+            .gateway-form { padding: 1.5rem 1.25rem; }
         }
     </style>
 </head>
 
 <body>
 
-    <div id="setupModal" class="setup-modal">
-        <h2>Welcome to NovaVoice</h2>
-        <input type="password" id="apiKey" class="api-input" placeholder="Enter Gemini API Key (AIza...)">
-        <button id="startSessionBtn" class="btn-start">Connect to Agent</button>
+    <!-- ═══ Setup Modal ═══ -->
+    <div id="setupModal" class="gateway-modal">
+        <div class="gateway-card">
+            <div class="window-header">
+                <span class="window-title">
+                    <span class="brand-logo">NEMO</span>
+                    voicenemo_installer.exe
+                </span>
+                <div class="window-controls">
+                    <div class="w-dot red"></div>
+                    <div class="w-dot yellow"></div>
+                    <div class="w-dot green"></div>
+                </div>
+            </div>
+            <div class="gateway-form">
+                <div class="gateway-logo">🎙️</div>
+                <h2>Connect to VoiceNemo</h2>
+                <p class="subtitle">Enter your Gemini API key to establish a secure WebSocket channel to the Live Voice agent.</p>
+                <input type="password" id="apiKey" class="gateway-input" placeholder="Paste your API Key (AIza...)">
+                <button id="startSessionBtn" class="gateway-btn">INITIALIZE CONNECTION</button>
+            </div>
+        </div>
     </div>
 
-    <div class="status-badge" id="statusBadge">
-        <div class="dot" id="statusDot"></div>
-        <span id="statusText">Disconnected</span>
+    <!-- ═══ Main App ═══ -->
+    <div class="app-container">
+
+        <!-- Header -->
+        <header class="app-header">
+            <div class="brand">
+                <div class="brand-logo">NEMO</div>
+                <span class="brand-text">VoiceNemo</span>
+            </div>
+            <div class="header-actions">
+                <button class="retro-btn" id="downloadBtn" title="Download Transcript">📥 LOG</button>
+            </div>
+        </header>
+
+        <!-- Status Bar -->
+        <div class="status-bar" id="statusBadge">
+            <span class="status-label">SYS_CHANNEL:</span>
+            <div class="status-value">
+                <div class="status-dot" id="statusDot"></div>
+                <span id="statusText">OFFLINE</span>
+            </div>
+        </div>
+
+        <!-- Oscillator Container -->
+        <div class="oscillator-container" id="orbContainer">
+            <span class="oscillator-title">Audio Oscillator Visualizer</span>
+            <div class="orb-wrapper">
+                <div class="visualizer-ring v-ring-1"></div>
+                <div class="visualizer-ring v-ring-2"></div>
+                <div class="visualizer-ring v-ring-3"></div>
+                <button class="call-btn-retro" id="callBtn">🎙️</button>
+            </div>
+        </div>
+
+        <!-- OS Window Terminal -->
+        <div class="window-terminal">
+            <div class="window-header">
+                <span class="window-title">
+                    📁 voicenemo_terminal.log
+                </span>
+                <div class="window-controls">
+                    <div class="w-dot red"></div>
+                    <div class="w-dot yellow"></div>
+                    <div class="w-dot green"></div>
+                </div>
+            </div>
+            <div class="terminal-body" id="transcript">
+                <div class="message system-msg">Awaiting system initialization...</div>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="terminal-actions">
+            <button class="retro-btn orange" id="downloadTranscriptBtn">
+                📥 DOWNLOAD TRANSCRIPT
+            </button>
+            <button class="retro-btn" id="clearTranscriptBtn">
+                🗑️ RESET
+            </button>
+        </div>
+
+        <!-- Footer -->
+        <footer class="app-footer">
+            CORE: <span>Gemini Live API</span> · TOOLS: Calendar · Weather · Email
+        </footer>
     </div>
 
-    <div class="orb-container" id="orbContainer">
-        <div class="ring"></div>
-        <button class="call-button" id="callBtn">🎙️</button>
-    </div>
-
-    <div class="transcript-container" id="transcript">
-        <div class="message system-msg">Waiting to connect...</div>
-    </div>
-
+    <!-- ═══════════════════════════════════════════════════════
+         JAVASCRIPT ENGINE
+         ═══════════════════════════════════════════════════════ -->
     <script>
+        // ─── UI References ───────────────────────────────────
         const UI = {
             setupModal: document.getElementById('setupModal'),
             startBtn: document.getElementById('startSessionBtn'),
@@ -235,9 +748,13 @@
             statusText: document.getElementById('statusText'),
             statusDot: document.getElementById('statusDot'),
             transcript: document.getElementById('transcript'),
-            orbContainer: document.getElementById('orbContainer')
+            orbContainer: document.getElementById('orbContainer'),
+            downloadBtn: document.getElementById('downloadBtn'),
+            downloadTranscriptBtn: document.getElementById('downloadTranscriptBtn'),
+            clearTranscriptBtn: document.getElementById('clearTranscriptBtn'),
         };
 
+        // ─── State ───────────────────────────────────────────
         let isCallActive = false;
         let ws = null;
         let audioContext = null;
@@ -254,6 +771,18 @@
         let aiAnalyser = null;
         let visualizerId = null;
 
+        // ─── Conversation Log ────────────────────────────────
+        const conversationLog = [];
+
+        function logEntry(role, text) {
+            conversationLog.push({
+                timestamp: new Date().toISOString(),
+                role: role,
+                text: text
+            });
+        }
+
+        // ─── WebSocket Setup ─────────────────────────────────
         UI.startBtn.addEventListener('click', () => {
             const key = UI.apiKeyInput.value.trim();
             if (!key) return alert("API Key is required.");
@@ -269,12 +798,20 @@
                 updateStatus('Ready', 'muted');
                 addMessage('System ready. Tap the mic to call.', 'system-msg');
 
-                // 🧠 CONTEXT INJECTION: Give Gemini the exact date and timezone
+                // Context injection: date + timezone
                 const currentDate = new Date().toString();
                 const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-                const systemPrompt = `You are a professional, helpful booking assistant. 
+                const systemPrompt = `You are VoiceNemo, a professional, helpful, and friendly AI voice assistant. 
                 CRITICAL CONTEXT: The current date and time is ${currentDate}. The user is in the ${timeZone} timezone. 
-                Always check availability first before booking a meeting to prevent double-booking. When booking or checking, format dates strictly to ISO 8601 offset to the user's timezone.`;
+                You can help users with:
+                1. Calendar management — checking availability and booking meetings
+                2. Weather information — fetching current weather for any city worldwide
+                3. Email reminders — sending reminder emails to specified addresses
+                Always check calendar availability first before booking a meeting. 
+                When booking or checking calendar, format dates strictly to ISO 8601 offset to the user's timezone.
+                When asked about weather, use the get_weather tool with the city name.
+                When asked to send an email or reminder, use the send_reminder tool.
+                Be conversational, concise, and helpful.`;
 
                 ws.send(JSON.stringify({
                     setup: {
@@ -286,6 +823,7 @@
                         systemInstruction: { parts: [{ text: systemPrompt }] },
                         tools: [{
                             functionDeclarations: [
+                                // ── Calendar Tools ──
                                 {
                                     name: "check_availability",
                                     description: "Checks the user's calendar for busy slots on a given day.",
@@ -309,6 +847,32 @@
                                         },
                                         required: ["title", "date_time", "guest_email"]
                                     }
+                                },
+                                // ── Weather Tool ──
+                                {
+                                    name: "get_weather",
+                                    description: "Fetches the current weather conditions for a given city worldwide including temperature, humidity, wind, and sky conditions.",
+                                    parameters: {
+                                        type: "OBJECT",
+                                        properties: {
+                                            city: { type: "STRING", description: "City name (e.g., 'Tokyo', 'New York', 'London')" }
+                                        },
+                                        required: ["city"]
+                                    }
+                                },
+                                // ── Email Reminder Tool ──
+                                {
+                                    name: "send_reminder",
+                                    description: "Sends a reminder email to a specified email address with a subject and body message.",
+                                    parameters: {
+                                        type: "OBJECT",
+                                        properties: {
+                                            to_email: { type: "STRING", description: "Recipient email address" },
+                                            subject: { type: "STRING", description: "Email subject line" },
+                                            body: { type: "STRING", description: "Email body content" }
+                                        },
+                                        required: ["to_email", "subject", "body"]
+                                    }
                                 }
                             ]
                         }]
@@ -316,9 +880,11 @@
                 }));
             };
 
+            // ─── Message Handler ─────────────────────────────
             ws.onmessage = async (event) => {
                 const msg = JSON.parse(await event.data.text ? await event.data.text() : event.data);
 
+                // ── Tool Calls ──
                 if (msg.toolCall) {
                     const functionCalls = msg.toolCall.functionCalls;
                     const responses = [];
@@ -330,16 +896,23 @@
                         let endpoint = "";
                         let visualOutput = "";
 
-                        // Handle logic for both tools dynamically
+                        // Route to correct backend endpoint
                         if (call.name === "book_meeting") {
                             endpoint = "http://127.0.0.1:5000/api/book_meeting";
                             visualOutput = `⚙️ Action: book_meeting()\n↳ Title: ${args.title}\n↳ Time: ${args.date_time}`;
                         } else if (call.name === "check_availability") {
                             endpoint = "http://127.0.0.1:5000/api/check_availability";
                             visualOutput = `🔍 Action: check_availability()\n↳ Date: ${args.date}`;
+                        } else if (call.name === "get_weather") {
+                            endpoint = "http://127.0.0.1:5000/api/get_weather";
+                            visualOutput = `🌤️ Action: get_weather()\n↳ City: ${args.city}`;
+                        } else if (call.name === "send_reminder") {
+                            endpoint = "http://127.0.0.1:5000/api/send_reminder";
+                            visualOutput = `✉️ Action: send_reminder()\n↳ To: ${args.to_email}\n↳ Subject: ${args.subject}`;
                         }
 
                         addToolCard(visualOutput);
+                        logEntry('tool', visualOutput);
 
                         try {
                             const res = await fetch(endpoint, {
@@ -349,15 +922,17 @@
                             });
                             const data = await res.json();
                             responses.push({ id: call.id, name: call.name, response: { output: data.result } });
+                            logEntry('tool-result', data.result);
                         } catch (error) {
                             console.error("Backend Error:", error);
-                            responses.push({ id: call.id, name: call.name, response: { output: "Error connected to local Python API." } });
+                            responses.push({ id: call.id, name: call.name, response: { output: "Error connecting to local Python API." } });
                         }
                     }
 
                     ws.send(JSON.stringify({ toolResponse: { functionResponses: responses } }));
                 }
 
+                // ── Server Content ──
                 if (msg.serverContent) {
                     const content = msg.serverContent;
 
@@ -371,11 +946,13 @@
 
                     if (content.inputTranscription && content.inputTranscription.text) {
                         addMessage(content.inputTranscription.text + " ", 'user-msg', true);
+                        logEntry('user', content.inputTranscription.text);
                     }
 
                     if (content.outputTranscription && content.outputTranscription.text) {
                         setSpeakingState(true);
                         addMessage(content.outputTranscription.text, 'ai-msg', true);
+                        logEntry('assistant', content.outputTranscription.text);
                     }
 
                     if (content.modelTurn) {
@@ -392,8 +969,20 @@
                     }
                 }
             };
+
+            ws.onclose = () => {
+                updateStatus('Disconnected', 'muted');
+                addMessage('Connection closed.', 'system-msg');
+            };
+
+            ws.onerror = (err) => {
+                console.error('WebSocket error:', err);
+                updateStatus('Error', 'muted');
+                addMessage('Connection error occurred.', 'system-msg');
+            };
         });
 
+        // ─── Call Button ─────────────────────────────────────
         UI.callBtn.addEventListener('click', async () => {
             isCallActive = !isCallActive;
 
@@ -419,7 +1008,7 @@
                     });
 
                     const source = audioContext.createMediaStreamSource(mediaStream);
-                    source.connect(micAnalyser); // Connect Mic to Analyser
+                    source.connect(micAnalyser);
 
                     scriptProcessor = audioContext.createScriptProcessor(1024, 1, 1);
                     scriptProcessor.onaudioprocess = (e) => {
@@ -437,10 +1026,12 @@
                     scriptProcessor.connect(audioContext.destination);
 
                 } catch (err) {
+                    console.error("Mic error:", err);
                     isCallActive = false;
                     UI.callBtn.classList.remove('active');
                     UI.callBtn.innerHTML = '🎙️';
                     updateStatus('Ready', 'muted');
+                    addMessage('Microphone access denied.', 'system-msg');
                 }
             } else {
                 UI.callBtn.classList.remove('active');
@@ -458,7 +1049,7 @@
             }
         });
 
-        // 🎵 VISUALIZER ENGINE
+        // ─── Visualizer Engine ───────────────────────────────
         function startVisualizer() {
             const micData = new Uint8Array(micAnalyser.frequencyBinCount);
             const aiData = new Uint8Array(aiAnalyser.frequencyBinCount);
@@ -469,11 +1060,9 @@
                 micAnalyser.getByteFrequencyData(micData);
                 aiAnalyser.getByteFrequencyData(aiData);
 
-                // Calculate average volume
                 const micVol = micData.reduce((a, b) => a + b, 0) / micData.length;
                 const aiVol = aiData.reduce((a, b) => a + b, 0) / aiData.length;
 
-                // Map volume (0-255) to scale factor (1.0 to 1.3)
                 const micScale = 1 + (micVol / 255) * 0.15;
                 const aiScale = 1 + (aiVol / 255) * 0.8;
 
@@ -485,6 +1074,7 @@
             render();
         }
 
+        // ─── Audio Utilities ─────────────────────────────────
         function float32ToBase64(float32Array) {
             let buffer = new ArrayBuffer(float32Array.length * 2);
             let view = new DataView(buffer);
@@ -515,7 +1105,6 @@
             const source = audioContext.createBufferSource();
             source.buffer = audioBuffer;
 
-            // Connect AI audio to our Visualizer Analyser Node
             source.connect(aiAnalyser);
             aiAnalyser.connect(audioContext.destination);
 
@@ -527,34 +1116,108 @@
             source.onended = () => { activeSources = activeSources.filter(s => s !== source); };
         }
 
+        // ─── UI Helpers ──────────────────────────────────────
         function updateStatus(text, dotClass) {
-            UI.statusText.innerText = text; UI.statusDot.className = `dot ${dotClass}`;
+            UI.statusText.innerText = text.toUpperCase();
+            UI.statusDot.className = `status-dot ${dotClass}`;
         }
+
         function addToolCard(text) {
-            const card = document.createElement('pre'); card.className = 'tool-card'; card.innerText = text;
-            UI.transcript.appendChild(card); UI.transcript.scrollTop = UI.transcript.scrollHeight;
-            activeBubble = null; activeRole = null;
+            const card = document.createElement('pre');
+            card.className = 'tool-card';
+            card.innerText = text;
+            UI.transcript.appendChild(card);
+            UI.transcript.scrollTop = UI.transcript.scrollHeight;
+            activeBubble = null;
+            activeRole = null;
         }
+
         function setSpeakingState(isSpeaking) {
             if (isSpeaking) {
-                UI.orbContainer.classList.add('speaking-mode'); updateStatus('Agent Speaking...', 'speaking');
+                UI.orbContainer.classList.add('speaking-mode');
+                updateStatus('Agent Speaking...', 'speaking');
             } else {
-                UI.orbContainer.classList.remove('speaking-mode'); if (isCallActive) updateStatus('Listening...', 'live');
+                UI.orbContainer.classList.remove('speaking-mode');
+                if (isCallActive) updateStatus('Listening...', 'live');
             }
         }
+
         function addMessage(text, typeClass, isChunk = false) {
             if (isChunk) {
                 if (activeBubble && activeRole === typeClass) {
-                    activeBubble.innerText += text; UI.transcript.scrollTop = UI.transcript.scrollHeight; return;
+                    activeBubble.innerText += text;
+                    UI.transcript.scrollTop = UI.transcript.scrollHeight;
+                    return;
                 }
-                activeBubble = document.createElement('div'); activeBubble.className = `message ${typeClass}`; activeBubble.innerText = text;
-                UI.transcript.appendChild(activeBubble); activeRole = typeClass;
+                activeBubble = document.createElement('div');
+                activeBubble.className = `message ${typeClass}`;
+                activeBubble.innerText = text;
+                UI.transcript.appendChild(activeBubble);
+                activeRole = typeClass;
             } else {
-                const msg = document.createElement('div'); msg.className = `message ${typeClass}`; msg.innerText = text;
-                UI.transcript.appendChild(msg); activeBubble = null; activeRole = null;
+                const msg = document.createElement('div');
+                msg.className = `message ${typeClass}`;
+                msg.innerText = text;
+                UI.transcript.appendChild(msg);
+                activeBubble = null;
+                activeRole = null;
             }
             UI.transcript.scrollTop = UI.transcript.scrollHeight;
         }
+
+        // ─── Transcript Download ─────────────────────────────
+        function downloadTranscript() {
+            if (conversationLog.length === 0) {
+                alert('No conversation to download yet.');
+                return;
+            }
+
+            const now = new Date();
+            const dateStr = now.toISOString().slice(0, 10);
+            const timeStr = now.toTimeString().slice(0, 5).replace(':', '-');
+
+            let md = `# VoiceNemo Conversation Transcript\n`;
+            md += `**Date:** ${now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}\n`;
+            md += `**Time:** ${now.toLocaleTimeString()}\n\n`;
+            md += `---\n\n`;
+
+            for (const entry of conversationLog) {
+                const time = new Date(entry.timestamp).toLocaleTimeString();
+                const roleLabel = {
+                    'user': '🗣️ You',
+                    'assistant': '🤖 VoiceNemo',
+                    'tool': '⚙️ Tool Call',
+                    'tool-result': '📦 Tool Result',
+                    'system': '📋 System'
+                }[entry.role] || entry.role;
+
+                md += `**${roleLabel}** _(${time})_\n`;
+                md += `${entry.text}\n\n`;
+            }
+
+            md += `---\n_Generated by VoiceNemo AI Assistant_\n`;
+
+            const blob = new Blob([md], { type: 'text/markdown' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `voicenemo-transcript-${dateStr}-${timeStr}.md`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        UI.downloadBtn.addEventListener('click', downloadTranscript);
+        UI.downloadTranscriptBtn.addEventListener('click', downloadTranscript);
+
+        // ─── Clear Transcript ────────────────────────────────
+        UI.clearTranscriptBtn.addEventListener('click', () => {
+            UI.transcript.innerHTML = '<div class="message system-msg">Transcript cleared.</div>';
+            conversationLog.length = 0;
+            activeBubble = null;
+            activeRole = null;
+        });
     </script>
 </body>
 

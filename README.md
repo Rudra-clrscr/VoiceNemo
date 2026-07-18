@@ -4,6 +4,18 @@
 
 ---
 
+## ✨ Features
+
+| Tool | Description |
+|------|-------------|
+| 📅 **Calendar** | Check availability and book 30-min meetings on Google Calendar |
+| 🌤️ **Weather** | Real-time weather for any city worldwide (Open-Meteo, no API key) |
+| ✉️ **Email** | Send reminder emails via Gmail SMTP |
+| 📝 **Transcript** | Download full conversation history as Markdown |
+| 🎨 **Premium UI** | Glassmorphic design, aurora animations, responsive layout |
+
+---
+
 # 🚀 Step 0 — Clone the Repository
 
 First, clone the repository locally:
@@ -35,17 +47,15 @@ source venv/bin/activate
 
 ---
 
-NovaVoice is an ultra-low latency, bidirectional streaming voice assistant that integrates the **Gemini Live API** (`BidiGenerateContent` WebSocket protocol) with **Google Calendar** for automated schedule checking and meeting booking.
+NovaVoice is an ultra-low latency, bidirectional streaming voice assistant that integrates the **Gemini Live API** (`BidiGenerateContent` WebSocket protocol) with **Google Calendar**, **Weather**, and **Email** tools for a truly multi-purpose voice experience.
 
 This repository contains the production-ready full-stack core, split into:
 1. **Interactive Glassmorphic UI (Frontend):** Manages user media devices, WebRTC audio streams, continuous WebSocket piping, active barge-in (interruption), and a visual visualizer orb.
-2. **Secure Python Gateway (Backend):** Protects long-term OAuth keys (`token.json`) and handles standard API calendar queries.
+2. **Secure Python Gateway (Backend):** Protects long-term OAuth keys (`token.json`) and handles calendar, weather, and email API queries.
 
 ---
 
 ## 🗺️ Architectural Flow
-
-Here is how NovaVoice orchestrates real-time communication between your web browser, Google's Gemini Bidirectional WebSocket service, a local API bridge, and the Google Calendar API:
 
 ```
 🗣️ User (Voice/Mic) 
@@ -56,41 +66,32 @@ Here is how NovaVoice orchestrates real-time communication between your web brow
        ▼ (Intercepts function call JSON)                                ▼ (Emits toolCall event)
 🐍 Python API Server (api_server.py on Port 5000) ◄───────────────────────┘
        │
-       ▼ (Google API Call with token.json)
-📅 Google Calendar
+       ├──► 📅 Google Calendar (book_meeting, check_availability)
+       ├──► 🌤️ Open-Meteo API (get_weather)
+       └──► ✉️ Gmail SMTP (send_reminder)
 ```
 
 ---
 
 ## 🚀 Installation & Prerequisites
 
-To run this application independently and hassle-free on any device (**Windows, macOS, or Linux**), follow the step-by-step setup below.
-
 ### Step 1: Install Dependencies
-Open your terminal inside the project directory and run the command matching your operating system to install the required Python packages:
-
-* **Windows:**
-  ```powershell
-  pip install -r requirements.txt
-  ```
-* **macOS / Linux:**
-  ```bash
-  pip3 install -r requirements.txt
-  ```
+```powershell
+pip install -r requirements.txt
+```
 
 > [!NOTE]
-> The dependencies include `flask`, `flask-cors`, `google-api-python-client`, `google-auth-oauthlib`, and other standard helpers required to securely bridge the browser to the calendar APIs.
+> The dependencies include `flask`, `flask-cors`, `google-api-python-client`, `google-auth-oauthlib`, `requests`, and other standard helpers.
 
 ---
 
-## 🔑 Google Cloud API Credentials Configuration
-
----
+## 🔑 Configuration
 
 ### Step 2: Configure your `.env` File
-Create a file named `.env` in the root directory of your project and populate it with the following configuration variables:
+Create a file named `.env` in the root directory:
 
 ```ini
+# Google Calendar OAuth
 GOOGLE_CLIENT_ID=your_google_oauth_client_id
 GOOGLE_CLIENT_SECRET=your_google_oauth_client_secret
 GOOGLE_REDIRECT_URI=http://localhost:8000/auth/callback
@@ -98,7 +99,16 @@ HOST_CALENDAR_ID=your_email@gmail.com
 HOST_EMAIL=your_email@gmail.com
 FRONTEND_URL=http://localhost:8000
 SECRET_KEY=your_random_secret_key_for_sessions
+
+# Email Reminders (Optional — needed for send_reminder tool)
+SMTP_EMAIL=your_email@gmail.com
+SMTP_APP_PASSWORD=your_gmail_app_password
 ```
+
+> [!TIP]
+> **Gmail App Password:** Go to https://myaccount.google.com/apppasswords to generate one.
+> You need 2FA enabled on your Google account first. The email tool will work without these,
+> but will return a friendly error asking the user to configure it.
 
 ---
 
@@ -130,18 +140,11 @@ SECRET_KEY=your_random_secret_key_for_sessions
 ---
 
 ### Step 5: Generate OAuth Credentials (`token.json`)
-The backend needs local calendar write authorization. We spin up a temporary authentication listener to retrieve the secure token.
-
 Start the authentication server:
 
-* **Windows:**
-  ```powershell
-  python auth_server.py
-  ```
-* **macOS / Linux:**
-  ```bash
-  python3 auth_server.py
-  ```
+```powershell
+python auth_server.py
+```
 
 1. Open **`http://localhost:8000`** in your browser.
 2. Click **Authorize Google Calendar** and sign in using your designated Google account.
@@ -152,33 +155,44 @@ Start the authentication server:
 
 ## 🎙️ Running the Live Assistant
 
-To initiate the fully autonomous real-time voice experience, start both the secure Python calendar controller and serve the UI:
-
-### 1. Launch the Secure Calendar API Bridge (Terminal Window 1)
-* **Windows:**
-  ```powershell
-  python api_server.py
-  ```
-* **macOS / Linux:**
-  ```bash
-  python3 api_server.py
-  ```
-*(Starts the bridge listening securely on port `5000`)*
+### 1. Launch the Secure API Bridge (Terminal Window 1)
+```powershell
+python api_server.py
+```
+*(Starts the bridge listening on port `5000` with calendar, weather, and email endpoints)*
 
 ### 2. Serve the UI Dashboard (Terminal Window 2)
-* **Windows:**
-  ```powershell
-  python -m http.server 8000
-  ```
-* **macOS / Linux:**
-  ```bash
-  python3 -m http.server 8000
-  ```
+```powershell
+python -m http.server 8000
+```
 *(Serves your interactive interface on port `8000`)*
 
 ### 3. Connect & Converse!
-1. Navigate to: **`http://localhost:8000`** in Google Chrome. *(Always access using `localhost` so the browser allows microphone media stream access over HTTP).*
+1. Navigate to: **`http://localhost:8000`** in Google Chrome.
 2. Paste your **Gemini API Key** into the prompt and click connect.
-3. Click the **🎙️** button and speak naturally:
-   > *"Hi Charon, check if my calendar is free tomorrow, and if I have time in the afternoon, please book a NovaVoice demo!"*
-4. View the scrolling console logs and interactive tool cards in real-time as Gemini checks slots, determines availability, and pushes the booking to your Google Calendar!
+3. Click the **🎙️** button and try these voice commands:
+
+| Voice Command | Tool Triggered |
+|--------------|----------------|
+| *"Check if my calendar is free tomorrow"* | 📅 `check_availability` |
+| *"Book a demo meeting at 3pm tomorrow"* | 📅 `book_meeting` |
+| *"What's the weather in Tokyo?"* | 🌤️ `get_weather` |
+| *"Send a reminder to john@email.com about the meeting"* | ✉️ `send_reminder` |
+
+4. Click **📥 Download Transcript** to save the entire conversation as a Markdown file!
+
+---
+
+## 📂 Project Structure
+
+```
+├── index.html          # Premium glassmorphic UI with all tools
+├── api_server.py       # Flask API bridge (4 endpoints)
+├── calendar_tool.py    # Google Calendar read/write
+├── weather_tool.py     # Open-Meteo weather fetcher
+├── email_tool.py       # Gmail SMTP email sender
+├── auth_server.py      # OAuth 2.0 token generator
+├── requirements.txt    # Python dependencies
+├── .env                # Configuration (you create this)
+└── token.json          # OAuth token (auto-generated)
+```
