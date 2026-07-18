@@ -1,17 +1,64 @@
-# Ignore environment variables and security credentials
-.env
-token.json
+# .gitignore — VoiceNemo Project
+# Authored by Rudra-clrscr (https://github.com/Rudra-clrscr)
 
-# Ignore Python cache and virtual environment
+# ─── Secrets & Local Credentials ─────────────────────────────────────
+.env
+.env.*
+token.json
+client_secret*.json
+*.pem
+*.p12
+*.pkcs12
+
+# ─── Python Environment & Cache ─────────────────────────────────────
 __pycache__/
-*.pyc
+*.py[cod]
+*$py.class
 venv/
 .venv/
+env/
+.env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
 
-# Ignore step-by-step educational CLI scripts (optional standalone scripts)
-step1_connect.py
-step2_voice.py
-step3_transcription.py
-step4_booking_tool.py
-step5_e2e.py
+# ─── Multimedia & Standalone Test Logs ──────────────────────────────
+*.wav
+*.mp3
+*.ogg
+step*.py
 response.wav
+
+# ─── IDE Configurations ─────────────────────────────────────────────
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.project
+.pydevproject
+
+# ─── Operating System Files ─────────────────────────────────────────
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
