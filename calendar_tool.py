@@ -1,4 +1,5 @@
 import os
+import json
 import datetime
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
@@ -7,9 +8,33 @@ from dotenv import load_dotenv
 load_dotenv()
 
 def get_calendar_service():
-    if not os.path.exists('token.json'):
-        raise Exception("Calendar is not authenticated. Missing token.json.")
-    creds = Credentials.from_authorized_user_file('token.json', ['https://www.googleapis.com/auth/calendar.events'])
+    # 1. Try loading from environment variable (Vercel production recommendation)
+    token_env = os.getenv("GOOGLE_OAUTH_TOKEN")
+    if token_env:
+        try:
+            info = json.loads(token_env)
+            creds = Credentials.from_authorized_user_info(info, ['https://www.googleapis.com/auth/calendar.events'])
+            return build('calendar', 'v3', credentials=creds)
+        except Exception as e:
+            print(f"Failed to load credentials from GOOGLE_OAUTH_TOKEN env: {e}")
+
+    # 2. Try loading from local token.json
+    paths_to_try = [
+        'token.json',
+        os.path.join(os.path.dirname(__file__), 'token.json'),
+        os.path.join(os.path.dirname(__file__), '..', 'token.json')
+    ]
+    
+    creds_file = None
+    for p in paths_to_try:
+        if os.path.exists(p):
+            creds_file = p
+            break
+            
+    if not creds_file:
+        raise Exception("Calendar is not authenticated. Missing token.json or GOOGLE_OAUTH_TOKEN environment variable.")
+        
+    creds = Credentials.from_authorized_user_file(creds_file, ['https://www.googleapis.com/auth/calendar.events'])
     return build('calendar', 'v3', credentials=creds)
 
 def check_availability(date_iso: str) -> str:

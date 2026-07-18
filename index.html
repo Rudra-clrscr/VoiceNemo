@@ -893,21 +893,26 @@
                         const args = call.args;
                         console.log("🎯 Tool Triggered:", call.name, args);
 
+                        // Determine backend API URL (fallback to local port 5000 if served via simple python HTTP server)
+                        const API_BASE = (window.location.port === '8000') 
+                            ? 'http://127.0.0.1:5000' 
+                            : '';
+
                         let endpoint = "";
                         let visualOutput = "";
 
                         // Route to correct backend endpoint
                         if (call.name === "book_meeting") {
-                            endpoint = "http://127.0.0.1:5000/api/book_meeting";
+                            endpoint = `${API_BASE}/api/book_meeting`;
                             visualOutput = `⚙️ Action: book_meeting()\n↳ Title: ${args.title}\n↳ Time: ${args.date_time}`;
                         } else if (call.name === "check_availability") {
-                            endpoint = "http://127.0.0.1:5000/api/check_availability";
+                            endpoint = `${API_BASE}/api/check_availability`;
                             visualOutput = `🔍 Action: check_availability()\n↳ Date: ${args.date}`;
                         } else if (call.name === "get_weather") {
-                            endpoint = "http://127.0.0.1:5000/api/get_weather";
+                            endpoint = `${API_BASE}/api/get_weather`;
                             visualOutput = `🌤️ Action: get_weather()\n↳ City: ${args.city}`;
                         } else if (call.name === "send_reminder") {
-                            endpoint = "http://127.0.0.1:5000/api/send_reminder";
+                            endpoint = `${API_BASE}/api/send_reminder`;
                             visualOutput = `✉️ Action: send_reminder()\n↳ To: ${args.to_email}\n↳ Subject: ${args.subject}`;
                         }
 
