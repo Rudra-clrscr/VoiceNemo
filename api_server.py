@@ -1,11 +1,17 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
 from calendar_tool import book_meeting, check_availability
 from weather_tool import get_weather
 from email_tool import send_reminder
+import os
 
 app = Flask(__name__)
 CORS(app)
+
+@app.route('/')
+def serve_index():
+    # Serve index.html from the current directory
+    return send_file('index.html')
 
 # ─── Calendar Endpoints ──────────────────────────────────────────────
 
